@@ -1,0 +1,82 @@
+{
+  "date_creation": "2025-12-19 14:16:37",
+  "datasets": {
+    "data_unified.csv": {
+      "description": "Dataset complet avec Production, Consommation et Commerce",
+      "dimensions": [
+        220,
+        11
+      ],
+      "colonnes": [
+        "SH",
+        "LIBELLES",
+        "year",
+        "production_fcfa",
+        "production_tonnes",
+        "consommation_fcfa",
+        "consommation_tonnes",
+        "imports_fcfa",
+        "exports_fcfa",
+        "imports_tonnes",
+        "exports_tonnes"
+      ]
+    },
+    "production_consommation.csv": {
+      "description": "Production et Consommation par secteur et année",
+      "dimensions": [
+        220,
+        7
+      ],
+      "colonnes": [
+        "SH",
+        "LIBELLES",
+        "year",
+        "production_fcfa",
+        "production_tonnes",
+        "consommation_fcfa",
+        "consommation_tonnes"
+      ]
+    },
+    "commerce.csv": {
+      "description": "Import/Export par secteur et année",
+      "dimensions": [
+        220,
+        6
+      ],
+      "colonnes": [
+        "year",
+        "LIBELLES",
+        "imports_fcfa",
+        "exports_fcfa",
+        "imports_tonnes",
+        "exports_tonnes"
+      ]
+    }
+  },
+  "periode": "2014-2023",
+  "nb_secteurs": 22,
+  "secteurs": [
+    "TOTAL",
+    "Animaux vivants et produits du règne animal",
+    "Produit du règne végétal",
+    "Graisses et huiles animales ou végétales",
+    "Produits des industries alimentaires : boissons, alcool, etc.",
+    "Bois, charbons de bois et ouvrages en bois",
+    "Produits minéraux",
+    "Produits des industries chimiques et connexes",
+    "Matières plastiques et ouvrages en ces matières",
+    "Peaux, cuirs, pelleteries et ouvrages en ces matières",
+    "Pâtes de bois ou d'autres matières fibreuses cellulosiques",
+    "Matières textiles et ouvrages en ces matières",
+    "Chaussures, coiffures, parapluie, cannes, etc.",
+    "Ouvrages en pierres, plâtres, ciments, amiante, mica ou matières analogues",
+    "Perles fines ou de culture, pierres gemmes ou similaires, métaux précieux, plaques ou doubles de métaux précieux et ouvrages en ces matières; bijouterie de fantaisie; monnaies",
+    "Armes, munitions et leurs parties et accessoires",
+    "Métaux communs et ouvrages en ces métaux",
+    "Machines et appareils, matériel électrique et leurs parties, etc.",
+    "Matériel de transport",
+    "Instruments et appareils d'optique, de photographie ou de cinématographique, etc.",
+    "Marchandises et produits divers",
+    "Objets d'art, de collection ou d'antiquité"
+  ]
+}

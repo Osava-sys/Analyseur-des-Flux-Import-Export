@@ -1,0 +1,140 @@
+{
+  "date_evaluation": "2025-12-19 17:56:24",
+  "model_performance": {
+    "regression": {
+      "train": {
+        "RMSE": 6.897474818977926,
+        "MAE": 2.3108105575100892,
+        "R²": 0.7639097061862984,
+        "MAPE": 22166740059.215702
+      },
+      "test": {
+        "RMSE": 3.6251552571652126,
+        "MAE": 1.8506013841239755,
+        "R²": 0.8319985792244519,
+        "MAPE": 17240798556.33753
+      },
+      "cross_validation": {
+        "r2_mean": 0.7046286131052772,
+        "r2_std": 0.11249441479917156,
+        "rmse_mean": 6.88968646796131
+      }
+    },
+    "classification": {
+      "accuracy": 0.9841269841269841,
+      "f1_macro": 0.9890592771948704,
+      "precision_macro": 0.9888888888888889,
+      "recall_macro": 0.9895833333333334,
+      "cross_validation": {
+        "accuracy_mean": 0.9761904761904763,
+        "accuracy_std": 0.026082026547865043
+      }
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "prix_unitaire_production",
+      "importance_reg": 0.43828079104423523,
+      "importance_clf": 0.0,
+      "importance_avg": 0.21914039552211761
+    },
+    {
+      "feature": "consommation_fcfa",
+      "importance_reg": 0.19586427509784698,
+      "importance_clf": 0.14345568418502808,
+      "importance_avg": 0.16965997219085693
+    },
+    {
+      "feature": "production_fcfa_growth",
+      "importance_reg": 0.0,
+      "importance_clf": 0.3336153030395508,
+      "importance_avg": 0.1668076515197754
+    },
+    {
+      "feature": "exports_fcfa",
+      "importance_reg": 0.18201181292533875,
+      "importance_clf": 0.07257711887359619,
+      "importance_avg": 0.12729446589946747
+    },
+    {
+      "feature": "taux_couverture",
+      "importance_reg": 0.015758614987134933,
+      "importance_clf": 0.15815791487693787,
+      "importance_avg": 0.08695826679468155
+    },
+    {
+      "feature": "balance_commerciale_fcfa",
+      "importance_reg": 0.15323562920093536,
+      "importance_clf": 0.0,
+      "importance_avg": 0.07661781460046768
+    },
+    {
+      "feature": "ratio_prod_conso_fcfa",
+      "importance_reg": 0.004632925149053335,
+      "importance_clf": 0.10659569501876831,
+      "importance_avg": 0.05561431124806404
+    },
+    {
+      "feature": "imports_fcfa_growth",
+      "importance_reg": 0.0,
+      "importance_clf": 0.05084306746721268,
+      "importance_avg": 0.02542153373360634
+    },
+    {
+      "feature": "intensite_export",
+      "importance_reg": 0.003875761292874813,
+      "importance_clf": 0.03871994838118553,
+      "importance_avg": 0.02129785530269146
+    },
+    {
+      "feature": "production_tonnes_growth",
+      "importance_reg": 0.0,
+      "importance_clf": 0.020280802622437477,
+      "importance_avg": 0.010140401311218739
+    },
+    {
+      "feature": "production_fcfa",
+      "importance_reg": 0.0032953601330518723,
+      "importance_clf": 0.012796458788216114,
+      "importance_avg": 0.00804590992629528
+    },
+    {
+      "feature": "production_fcfa_lag2",
+      "importance_reg": 0.0,
+      "importance_clf": 0.012787627056241035,
+      "importance_avg": 0.006393813528120518
+    },
+    {
+      "feature": "total_production_tonnes",
+      "importance_reg": 0.0,
+      "importance_clf": 0.012713291682302952,
+      "importance_avg": 0.006356645841151476
+    },
+    {
+      "feature": "imports_fcfa",
+      "importance_reg": 0.0,
+      "importance_clf": 0.012130520306527615,
+      "importance_avg": 0.006065260153263807
+    },
+    {
+      "feature": "part_marche_production",
+      "importance_reg": 0.0,
+      "importance_clf": 0.012056314386427402,
+      "importance_avg": 0.006028157193213701
+    }
+  ],
+  "error_analysis": {
+    "mean_absolute_error": 1.8506013841239755,
+    "median_error": 1.0739600761447832,
+    "max_error": 21.911346816526496,
+    "misclassification_rate": 0.015873015873015872
+  },
+  "recommendations_summary": {
+    "high_potential_sectors": [
+      "Perles fines ou de culture, pierres gemmes ou similaires, métaux précieux, plaques ou doubles de métaux précieux et ouvrages en ces matières; bijouterie de fantaisie; monnaies",
+      "Matières textiles et ouvrages en ces matières"
+    ],
+    "priority_sectors": [],
+    "total_substitution_potential_mds_fcfa": 0.0
+  }
+}

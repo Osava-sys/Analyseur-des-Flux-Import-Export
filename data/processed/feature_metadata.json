@@ -1,0 +1,142 @@
+{
+  "date_creation": "2025-12-19 17:21:32",
+  "dimensions": [
+    210,
+    52
+  ],
+  "nb_features": 48,
+  "feature_categories": {
+    "Identifiants": [
+      "SH",
+      "LIBELLES",
+      "year"
+    ],
+    "Données brutes": [
+      "production_fcfa",
+      "production_tonnes",
+      "consommation_fcfa",
+      "consommation_tonnes",
+      "imports_fcfa",
+      "exports_fcfa",
+      "imports_tonnes",
+      "exports_tonnes"
+    ],
+    "Features temporelles": [
+      "year_normalized",
+      "years_since_start",
+      "is_covid_period",
+      "period_encoded"
+    ],
+    "Ratios économiques": [
+      "balance_commerciale_fcfa",
+      "balance_commerciale_tonnes",
+      "taux_couverture",
+      "ratio_prod_conso_fcfa",
+      "ratio_prod_imports",
+      "intensite_export",
+      "prix_unitaire_production",
+      "prix_unitaire_imports",
+      "prix_unitaire_exports"
+    ],
+    "Performance sectorielle": [
+      "part_marche_production",
+      "indice_specialisation",
+      "valeur_ajoutee_estimee",
+      "taux_autosuffisance"
+    ],
+    "Features de lag": [
+      "production_fcfa_lag1",
+      "production_fcfa_lag2",
+      "production_tonnes_lag1",
+      "production_tonnes_lag2",
+      "imports_fcfa_lag1",
+      "imports_fcfa_lag2",
+      "exports_fcfa_lag1",
+      "exports_fcfa_lag2"
+    ],
+    "Taux de croissance": [
+      "production_fcfa_growth",
+      "production_tonnes_growth",
+      "imports_fcfa_growth",
+      "exports_fcfa_growth"
+    ],
+    "Moyennes mobiles": [
+      "production_fcfa_ma3",
+      "production_tonnes_ma3",
+      "imports_fcfa_ma3",
+      "exports_fcfa_ma3"
+    ],
+    "Tendances": [
+      "production_trend"
+    ],
+    "Encodages catégoriels": [
+      "sector_encoded",
+      "sector_size_encoded"
+    ]
+  },
+  "target_options": [
+    "production_fcfa",
+    "exports_fcfa",
+    "balance_commerciale_fcfa"
+  ],
+  "exclude_cols": [
+    "SH",
+    "LIBELLES",
+    "economic_period",
+    "sector_size_category"
+  ],
+  "all_columns": [
+    "SH",
+    "LIBELLES",
+    "year",
+    "production_fcfa",
+    "production_tonnes",
+    "consommation_fcfa",
+    "consommation_tonnes",
+    "imports_fcfa",
+    "exports_fcfa",
+    "imports_tonnes",
+    "exports_tonnes",
+    "year_normalized",
+    "years_since_start",
+    "economic_period",
+    "is_covid_period",
+    "balance_commerciale_fcfa",
+    "balance_commerciale_tonnes",
+    "taux_couverture",
+    "ratio_prod_conso_fcfa",
+    "ratio_prod_imports",
+    "intensite_export",
+    "prix_unitaire_production",
+    "prix_unitaire_imports",
+    "prix_unitaire_exports",
+    "total_production_fcfa",
+    "total_production_tonnes",
+    "part_marche_production",
+    "indice_specialisation",
+    "valeur_ajoutee_estimee",
+    "demande_interieure",
+    "taux_autosuffisance",
+    "production_fcfa_lag1",
+    "production_fcfa_lag2",
+    "production_tonnes_lag1",
+    "production_tonnes_lag2",
+    "imports_fcfa_lag1",
+    "imports_fcfa_lag2",
+    "exports_fcfa_lag1",
+    "exports_fcfa_lag2",
+    "production_fcfa_growth",
+    "production_tonnes_growth",
+    "imports_fcfa_growth",
+    "exports_fcfa_growth",
+    "production_fcfa_ma3",
+    "production_tonnes_ma3",
+    "imports_fcfa_ma3",
+    "exports_fcfa_ma3",
+    "production_trend",
+    "sector_encoded",
+    "period_encoded",
+    "sector_size_category",
+    "sector_size_encoded"
+  ]
+}
