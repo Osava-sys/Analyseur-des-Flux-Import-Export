@@ -22,8 +22,8 @@ from PyPDF2 import PdfReader
 # ============================================================
 # Configuration Groq LLM
 # ============================================================
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+GROQ_API_KEY = "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"
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Dossier des documents
 DOCUMENTS_DIR = Path(__file__).parent / "documents"
@@ -1440,22 +1440,19 @@ SUBSTITUTION (top 5): {'; '.join([f"{r['secteur'][:20]}:Score{r['score_substitut
             
             with st.spinner("Reflexion..."):
                 try:
-                    if not groq_client:
-                        assistant_response = "Erreur: Cle API Groq non configuree. Definissez la variable d'environnement GROQ_API_KEY."
-                    else:
-                        context = get_data_context()
-                        messages = [
-                            {"role": "system", "content": context},
-                            {"role": "user", "content": user_input}
-                        ]
-                        
-                        response = groq_client.chat.completions.create(
-                            model="llama-3.1-8b-instant",
-                            messages=messages,
-                            max_tokens=512,
-                            temperature=0.7
-                        )
-                        assistant_response = response.choices[0].message.content
+                    context = get_data_context()
+                    messages = [
+                        {"role": "system", "content": context},
+                        {"role": "user", "content": user_input}
+                    ]
+                    
+                    response = groq_client.chat.completions.create(
+                        model="llama-3.1-8b-instant",
+                        messages=messages,
+                        max_tokens=512,
+                        temperature=0.7
+                    )
+                    assistant_response = response.choices[0].message.content
                 except Exception as e:
                     assistant_response = f"Erreur: {str(e)}"
             
