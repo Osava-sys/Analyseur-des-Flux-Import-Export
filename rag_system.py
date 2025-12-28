@@ -759,8 +759,9 @@ RAPPEL: Reponds directement avec les faits, JAMAIS de mention de source, documen
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=temperature,
-                max_tokens=max_tokens
+                temperature=0.2,  # Temperature tres basse pour eviter les hallucinations
+                max_tokens=800,   # Limite raisonnable
+                top_p=0.85        # Nucleus sampling pour coherence
             )
             
             answer = response.choices[0].message.content
