@@ -1,7 +1,6 @@
 """
 Analyseur de Flux Import/Export - Burkina Faso
 ====================================================
-Dashboard interactif inspiré de Google Analytics
 """
 
 import streamlit as st
@@ -19,10 +18,18 @@ import os
 from groq import Groq
 from PyPDF2 import PdfReader
 
+# Système RAG
+try:
+    from rag_system import RAGSystem, initialize_rag_system
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+    print("⚠️ Système RAG non disponible - Installation requise: pip install sentence-transformers faiss-cpu")
+
 # ============================================================
 # Configuration Groq LLM
 # ============================================================
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Dossier des documents
@@ -30,7 +37,22 @@ DOCUMENTS_DIR = Path(__file__).parent / "documents"
 DOCUMENTS_DIR.mkdir(exist_ok=True)
 
 # ============================================================
-# Fonctions pour les documents PDF
+# Initialisation du système RAG
+# ============================================================
+@st.cache_resource
+def get_rag_system():
+    """Initialise le système RAG (mise en cache pour performance)."""
+    if not RAG_AVAILABLE:
+        return None
+    try:
+        rag = initialize_rag_system(GROQ_API_KEY, force_rebuild=False)
+        return rag
+    except Exception as e:
+        print(f"Erreur initialisation RAG: {e}")
+        return None
+
+# ============================================================
+# Fonctions pour les documents PDF (fallback si RAG non disponible)
 # ============================================================
 def extract_text_from_pdf(pdf_path):
     try:
@@ -43,15 +65,17 @@ def extract_text_from_pdf(pdf_path):
         return f"Erreur lecture PDF: {str(e)}"
 
 def get_all_documents_context():
+    """Extrait le contexte des documents sans mentionner les noms de fichiers."""
     documents_text = ""
     pdf_files = list(DOCUMENTS_DIR.glob("*.pdf"))
     if not pdf_files:
         return ""
-    for pdf_file in pdf_files[:3]:
+    for i, pdf_file in enumerate(pdf_files[:3], 1):
         text = extract_text_from_pdf(pdf_file)
         if text and not text.startswith("Erreur"):
             text = ' '.join(text.split())
-            documents_text += f"\n[{pdf_file.name}]: {text[:800]}..."
+            # Ne pas inclure le nom du fichier, juste le contenu
+            documents_text += f"\n{text[:800]}..."
     return documents_text
 
 # ============================================================
@@ -68,13 +92,13 @@ st.set_page_config(
 # Initialisation du thème
 # ============================================================
 if 'theme' not in st.session_state:
-    st.session_state.theme = "light"
+    st.session_state.theme = "dark"
 
 if 'page' not in st.session_state:
     st.session_state.page = "Accueil"
 
 # ============================================================
-# Définition des thèmes (Google Analytics Style)
+# Définition des thèmes 
 # ============================================================
 def get_theme_colors(theme):
     if theme == "dark":
@@ -558,13 +582,84 @@ st.markdown(f"""
         border-radius: 8px;
         padding: 16px;
     }}
+    
+    /* Styles pour les métriques Streamlit en mode clair */
+    {f"""
+    [data-testid='stMetric'] label {{
+        color: {colors['text_secondary']} !important;
+        font-size: 14px !important;
+    }}
+    [data-testid='stMetric'] [data-testid='stMetricValue'] {{
+        color: {colors['text_primary']} !important;
+        font-size: 36px !important;
+        font-weight: 400 !important;
+    }}
+    [data-testid='stMetric'] [data-testid='stMetricDelta'] {{
+        color: {colors['text_secondary']} !important;
+    }}
+    
+    /* Couleurs de texte globales en mode clair */
+    .stApp, .stApp p, .stApp span, .stApp div, .stApp label {{
+        color: #1f2937 !important;
+    }}
+    
+    .stMarkdown, .stMarkdown p {{
+        color: #1f2937 !important;
+    }}
+    
+    h1, h2, h3, h4, h5, h6 {{
+        color: #111827 !important;
+    }}
+    
+    .stSelectbox label, .stTextInput label, .stSlider label, .stMultiSelect label {{
+        color: #374151 !important;
+    }}
+    
+    .stSelectbox > div > div, .stMultiSelect > div > div {{
+        color: #1f2937 !important;
+    }}
+    
+    [data-testid="stWidgetLabel"] {{
+        color: #374151 !important;
+    }}
+    
+    .stTextInput input, .stSelectbox select {{
+        color: #1f2937 !important;
+    }}
+    
+    /* Sidebar textes en mode clair */
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] div, [data-testid="stSidebar"] label {{
+        color: #374151 !important;
+    }}
+    
+    [data-testid="stSidebar"] .stButton button {{
+        color: #374151 !important;
+    }}
+    
+    /* Style pour le champ de saisie du chat */
+    .stTextInput input {{
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 8px !important;
+    }}
+    
+    .stTextInput input::placeholder {{
+        color: #9ca3af !important;
+    }}
+    
+    .stTextInput input:focus {{
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    }}
+    """ if not is_dark else ""}
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# Chargement des données
+# Chargement des données (cache avec ttl pour actualisation)
 # ============================================================
-@st.cache_data
+@st.cache_data(ttl=60)
 def load_data():
     DATA_PATH = Path("data/processed")
     MODELS_PATH = Path("models")
@@ -572,8 +667,13 @@ def load_data():
     recommendations = pd.read_csv(MODELS_PATH / "recommendations_report.csv")
     with open(MODELS_PATH / "model_metadata.json", 'r', encoding='utf-8') as f:
         model_metadata = json.load(f)
-    with open(MODELS_PATH / "evaluation_report.json", 'r', encoding='utf-8') as f:
-        evaluation_report = json.load(f)
+    # Charger evaluation_report si existe, sinon utiliser un dict vide
+    eval_report_path = MODELS_PATH / "evaluation_report.json"
+    if eval_report_path.exists():
+        with open(eval_report_path, 'r', encoding='utf-8') as f:
+            evaluation_report = json.load(f)
+    else:
+        evaluation_report = {}
     return df, recommendations, model_metadata, evaluation_report
 
 @st.cache_resource
@@ -656,13 +756,13 @@ with col1:
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
         <span style="font-size: 28px; font-weight: 400; color: {colors['text_primary']};">{page}</span>
     </div>
-    <div style="font-size: 13px; color: {colors['text_muted']};">Analyse des flux commerciaux - Burkina Faso - 2014-2023</div>
+    <div style="font-size: 13px; color: {colors['text_muted']};">Analyse des flux commerciaux - Burkina Faso - 2014-2025</div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown(f"""
     <div style="text-align: right; font-size: 13px; color: {colors['text_muted']};">
-        Derniere mise a jour: Decembre 2023
+        Derniere mise a jour: Decembre 2025
     </div>
     """, unsafe_allow_html=True)
 
@@ -729,7 +829,7 @@ if page == "Accueil":
             <div class="ga-card">
                 <div class="ga-card-header">
                     <span class="ga-card-title">Evolution des flux commerciaux</span>
-                    <span style="font-size: 12px; color: {colors['text_muted']};">2014 - 2023</span>
+                    <span style="font-size: 12px; color: {colors['text_muted']};">2014 - 2025</span>
                 </div>
                 <div class="ga-card-body">
             """, unsafe_allow_html=True)
@@ -769,24 +869,28 @@ if page == "Accueil":
                 template=plot_template,
                 paper_bgcolor=colors['chart_bg'],
                 plot_bgcolor=colors['chart_bg'],
+                font=dict(color=colors['text_primary']),
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
                     y=1.02,
                     xanchor="left",
                     x=0,
-                    font=dict(size=12)
+                    font=dict(size=12, color=colors['text_primary'])
                 ),
                 margin=dict(l=0, r=0, t=30, b=0),
                 xaxis=dict(
                     showgrid=True,
                     gridcolor=colors['border'],
-                    title=""
+                    title="",
+                    tickfont=dict(color=colors['text_primary'])
                 ),
                 yaxis=dict(
                     showgrid=True,
                     gridcolor=colors['border'],
-                    title="Milliards FCFA"
+                    title="Milliards FCFA",
+                    tickfont=dict(color=colors['text_primary']),
+                    title_font=dict(color=colors['text_primary'])
                 ),
                 hovermode='x unified'
             )
@@ -828,7 +932,8 @@ if page == "Accueil":
                 showlegend=False,
                 template=plot_template,
                 paper_bgcolor=colors['chart_bg'],
-                margin=dict(l=20, r=20, t=20, b=20)
+                margin=dict(l=20, r=20, t=20, b=20),
+                font=dict(color=colors['text_primary'])
             )
             st.plotly_chart(fig, use_container_width=True)
             
@@ -905,7 +1010,10 @@ elif page == "Temps réel":
                 margin=dict(l=0, r=0, t=10, b=0),
                 xaxis_title="Production (FCFA)",
                 yaxis_title="",
-                showlegend=False
+                showlegend=False,
+                font=dict(color=colors['text_primary']),
+                xaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary'])),
+                yaxis=dict(tickfont=dict(color=colors['text_primary']))
             )
             fig.update_yaxes(ticktext=[t[:30]+"..." if len(t) > 30 else t for t in top_prod['LIBELLES']])
             st.plotly_chart(fig, use_container_width=True)
@@ -936,7 +1044,10 @@ elif page == "Temps réel":
                 margin=dict(l=0, r=0, t=10, b=0),
                 xaxis_title="Importations (FCFA)",
                 yaxis_title="",
-                showlegend=False
+                showlegend=False,
+                font=dict(color=colors['text_primary']),
+                xaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary'])),
+                yaxis=dict(tickfont=dict(color=colors['text_primary']))
             )
             fig.update_yaxes(ticktext=[t[:30]+"..." if len(t) > 30 else t for t in top_imports['LIBELLES']])
             st.plotly_chart(fig, use_container_width=True)
@@ -1045,9 +1156,12 @@ elif page == "Analyse":
                     template=plot_template,
                     paper_bgcolor=colors['chart_bg'],
                     plot_bgcolor=colors['chart_bg'],
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                    font=dict(color=colors['text_primary']),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(color=colors['text_primary'])),
                     margin=dict(l=0, r=0, t=30, b=0),
-                    hovermode='x unified'
+                    hovermode='x unified',
+                    xaxis=dict(tickfont=dict(color=colors['text_primary'])),
+                    yaxis=dict(tickfont=dict(color=colors['text_primary']))
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 
@@ -1076,8 +1190,11 @@ elif page == "Analyse":
                     template=plot_template,
                     paper_bgcolor=colors['chart_bg'],
                     plot_bgcolor=colors['chart_bg'],
+                    font=dict(color=colors['text_primary']),
                     margin=dict(l=0, r=0, t=10, b=0),
-                    yaxis_title="Milliards FCFA"
+                    yaxis_title="Milliards FCFA",
+                    xaxis=dict(tickfont=dict(color=colors['text_primary'])),
+                    yaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary']))
                 )
                 st.plotly_chart(fig, use_container_width=True)
     
@@ -1140,7 +1257,10 @@ elif page == "Recommandations":
             template=plot_template,
             paper_bgcolor=colors['chart_bg'],
             plot_bgcolor=colors['chart_bg'],
-            margin=dict(l=0, r=0, t=10, b=0)
+            margin=dict(l=0, r=0, t=10, b=0),
+            font=dict(color=colors['text_primary']),
+            xaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary'])),
+            yaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary']))
         )
         st.plotly_chart(fig, use_container_width=True)
         
@@ -1283,17 +1403,42 @@ elif page == "Performance ML":
                 <div class="ga-card-body">
             """, unsafe_allow_html=True)
             
-            metrics = model_metadata['regression_model']['metrics']
+            # Nouveau format de métadonnées (version 2.0)
+            try:
+                # Accès direct à la structure metrics.regression
+                if isinstance(model_metadata, dict) and 'metrics' in model_metadata:
+                    metrics_reg = model_metadata['metrics'].get('regression', {})
+                    if isinstance(metrics_reg, dict):
+                        r2 = float(metrics_reg.get('r2', 0))
+                        rmse = float(metrics_reg.get('rmse', 0))
+                    else:
+                        r2 = 0.0
+                        rmse = 0.0
+                elif isinstance(model_metadata, dict) and 'model_performance' in model_metadata:
+                    # Ancien format (evaluation_report)
+                    perf = model_metadata.get('model_performance', {})
+                    reg_perf = perf.get('regression', {}).get('test', {})
+                    r2 = float(reg_perf.get('R²', reg_perf.get('r2', 0)))
+                    rmse = float(reg_perf.get('RMSE', reg_perf.get('rmse', 0)))
+                else:
+                    r2 = 0.0
+                    rmse = 0.0
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
+                r2 = 0.0
+                rmse = 0.0
+            
+            date_creation = model_metadata.get('date_creation', 'N/A')
+            periode = model_metadata.get('periode_donnees', '2014-2025')
             
             col_a, col_b, col_c = st.columns(3)
-            col_a.metric("R2 Score", f"{metrics['r2']:.4f}")
-            col_b.metric("RMSE", f"{metrics['rmse']:.4f}")
-            col_c.metric("MAE", f"{metrics['mae']:.4f}")
+            col_a.metric("R2 Score", f"{r2:.4f}")
+            col_b.metric("RMSE", f"{rmse:.4f}")
+            col_c.metric("Periode", periode)
             
             st.markdown(f"""
             <div style="margin-top: 16px; padding: 12px; background: {colors['bg_secondary']}; border-radius: 8px;">
                 <div style="font-size: 12px; color: {colors['text_muted']};">
-                    Date d'entrainement: {model_metadata['date_training']}<br>
+                    Date d'entrainement: {date_creation}<br>
                     Algorithme: XGBoost Regressor
                 </div>
             </div>
@@ -1311,11 +1456,28 @@ elif page == "Performance ML":
                 <div class="ga-card-body">
             """, unsafe_allow_html=True)
             
-            metrics = model_metadata['classification_model']['metrics']
+            # Nouveau format de métadonnées (version 2.0)
+            try:
+                # Accès direct à la structure metrics.classification
+                if isinstance(model_metadata, dict) and 'metrics' in model_metadata:
+                    metrics_clf = model_metadata['metrics'].get('classification', {})
+                    if isinstance(metrics_clf, dict):
+                        accuracy = float(metrics_clf.get('accuracy', 0))
+                    else:
+                        accuracy = 0.0
+                elif isinstance(model_metadata, dict) and 'model_performance' in model_metadata:
+                    # Ancien format (evaluation_report)
+                    perf = model_metadata.get('model_performance', {})
+                    clf_perf = perf.get('classification', {})
+                    accuracy = float(clf_perf.get('accuracy', 0))
+                else:
+                    accuracy = 0.0
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
+                accuracy = 0.0
             
             col_a, col_b = st.columns(2)
-            col_a.metric("Accuracy", f"{metrics['accuracy']:.4f}")
-            col_b.metric("F1-Score", f"{metrics['f1_macro']:.4f}")
+            col_a.metric("Accuracy", f"{accuracy:.4f}")
+            col_b.metric("Classes", "3")
             
             st.markdown(f"""
             <div style="margin-top: 16px; padding: 12px; background: {colors['bg_secondary']}; border-radius: 8px;">
@@ -1357,7 +1519,10 @@ elif page == "Performance ML":
                 paper_bgcolor=colors['chart_bg'],
                 plot_bgcolor=colors['chart_bg'],
                 margin=dict(l=0, r=0, t=10, b=0),
-                coloraxis_showscale=False
+                coloraxis_showscale=False,
+                font=dict(color=colors['text_primary']),
+                xaxis=dict(tickfont=dict(color=colors['text_primary']), title_font=dict(color=colors['text_primary'])),
+                yaxis=dict(tickfont=dict(color=colors['text_primary']))
             )
             st.plotly_chart(fig, use_container_width=True)
     
@@ -1370,8 +1535,16 @@ elif page == "Assistant IA":
     if 'chat_messages' not in st.session_state:
         st.session_state.chat_messages = []
     
+    if 'rag_sources' not in st.session_state:
+        st.session_state.rag_sources = []
+    
     if data_loaded:
+        # Charger le système RAG
+        rag_system = get_rag_system() if RAG_AVAILABLE else None
+        rag_active = rag_system is not None and rag_system.is_initialized
+        
         def get_data_context():
+            """Fallback si RAG non disponible."""
             top_production = df.groupby('LIBELLES')['production_fcfa'].sum().nlargest(5)
             top_imports = df.groupby('LIBELLES')['imports_fcfa'].sum().nlargest(5)
             
@@ -1381,9 +1554,11 @@ elif page == "Assistant IA":
             
             docs_context = get_all_documents_context()
             
-            context = f"""Tu es un economiste expert du Burkina Faso, specialise en politique commerciale et substitution aux importations. Reponds en francais, sois concis et cite les chiffres.
+            context = f"""Tu es un économiste expert du Burkina Faso, spécialisé en politique commerciale, développement économique et substitution aux importations. Tu maîtrises les enjeux macro-économiques, les stratégies sectorielles, lanalyse des politiques publiques et les données statistiques du pays. 
 
-DONNEES (2014-2023):
+REGLE CRITIQUE: NE MENTIONNE JAMAIS les sources, documents, rapports ou fichiers. Ne dis jamais "selon le document", "d'apres le rapport". Reponds naturellement comme si tu connaissais ces informations.
+
+DONNEES (2014-2025):
 - Production moyenne: {df.groupby('year')['production_fcfa'].sum().mean():.0f} Mds FCFA/an
 - Imports moyens: {df.groupby('year')['imports_fcfa'].sum().mean():.0f} Mds FCFA/an
 - Exports moyens: {df.groupby('year')['exports_fcfa'].sum().mean():.0f} Mds FCFA/an
@@ -1393,22 +1568,46 @@ TOP IMPORTS: {', '.join([f"{s[:25]}" for s in top_imports.head(3).index])}
 
 SUBSTITUTION (top 5): {'; '.join([f"{r['secteur'][:20]}:Score{r['score_substitution']:.0f}" for _, r in recommendations.head(5).iterrows()])}
 
-{f"DOCS: {docs_context[:1000]}" if docs_context else ""}"""
+{f"INFORMATIONS SUPPLEMENTAIRES: {docs_context[:1000]}" if docs_context else ""}"""
             return context
+        
+        # Header avec statut RAG
+        rag_status_badge = "badge-green" if rag_active else "badge-yellow"
+        rag_status_text = "RAG Actif" if rag_active else "Mode Simple"
         
         st.markdown(f"""
         <div class="ga-card">
             <div class="ga-card-header">
                 <span class="ga-card-title">Assistant IA - Expert Commerce</span>
-                <span class="badge badge-green">Actif</span>
+                <div>
+                    <span class="badge {rag_status_badge}">{rag_status_text}</span>
+                </div>
             </div>
             <div class="ga-card-body">
         """, unsafe_allow_html=True)
         
+        # Info RAG
+        if rag_active:
+            rag_stats = rag_system.get_stats()
+            st.markdown(f"""
+            <div style="padding: 12px; background: rgba(30, 142, 62, 0.1); border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+                <strong>Systeme RAG:</strong> {rag_stats['total_documents']} documents indexes | 
+                Modele: all-MiniLM-L6-v2 | 
+                Sources: {', '.join(rag_stats.get('source_types', {}).keys())}
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="padding: 12px; background: rgba(249, 171, 0, 0.1); border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+                <strong>Mode Simple:</strong> Le systeme RAG n'est pas active. 
+                Executez <code>python rag_system.py</code> pour indexer les documents.
+            </div>
+            """, unsafe_allow_html=True)
+        
         # Messages
         chat_container = st.container()
         with chat_container:
-            for message in st.session_state.chat_messages:
+            for i, message in enumerate(st.session_state.chat_messages):
                 if message["role"] == "user":
                     st.markdown(f"""
                     <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
@@ -1425,55 +1624,80 @@ SUBSTITUTION (top 5): {'; '.join([f"{r['secteur'][:20]}:Score{r['score_substitut
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    # Sources non affichées automatiquement (disponibles uniquement si l'utilisateur demande)
         
         st.markdown("</div></div>", unsafe_allow_html=True)
         
-        # Input
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            user_input = st.text_input("Message...", key="chat_input", placeholder="Posez votre question sur les flux commerciaux...", label_visibility="collapsed")
-        with col2:
-            send_button = st.button("Envoyer", use_container_width=True)
+        # Input - Utiliser un formulaire pour permettre l'envoi avec Entrée
+        with st.form(key="chat_form", clear_on_submit=True):
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                user_input = st.text_input("Message...", key="chat_input", placeholder="Posez votre question sur les flux commerciaux...", label_visibility="collapsed")
+            with col2:
+                send_button = st.form_submit_button("Envoyer", use_container_width=True)
         
         if send_button and user_input:
             st.session_state.chat_messages.append({"role": "user", "content": user_input})
             
-            with st.spinner("Reflexion..."):
+            with st.spinner("Recherche et analyse en cours..." if rag_active else "Reflexion..."):
                 try:
-                    context = get_data_context()
-                    messages = [
-                        {"role": "system", "content": context},
-                        {"role": "user", "content": user_input}
-                    ]
-                    
-                    response = groq_client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
-                        messages=messages,
-                        max_tokens=512,
-                        temperature=0.7
-                    )
-                    assistant_response = response.choices[0].message.content
+                    if rag_active:
+                        # Utiliser le système RAG
+                        result = rag_system.generate_response(user_input, top_k=5)
+                        
+                        if result["success"]:
+                            assistant_response = result["answer"]
+                            sources = result.get("sources", [])
+                        else:
+                            assistant_response = f"Erreur RAG: {result.get('error', 'Erreur inconnue')}"
+                            sources = []
+                    else:
+                        # Fallback: mode simple
+                        context = get_data_context()
+                        messages = [
+                            {"role": "system", "content": context},
+                            {"role": "user", "content": user_input}
+                        ]
+                        
+                        response = groq_client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=messages,
+                            max_tokens=512,
+                            temperature=0.7
+                        )
+                        assistant_response = response.choices[0].message.content
+                        sources = []
+                        
                 except Exception as e:
                     assistant_response = f"Erreur: {str(e)}"
+                    sources = []
             
-            st.session_state.chat_messages.append({"role": "assistant", "content": assistant_response})
+            st.session_state.chat_messages.append({
+                "role": "assistant", 
+                "content": assistant_response,
+                "sources": sources
+            })
             st.rerun()
         
-        col1, col2 = st.columns([1, 5])
-        with col1:
-            if st.button("Effacer"):
-                st.session_state.chat_messages = []
-                st.rerun()
+        # Bouton Effacer
+        if st.button("Effacer la conversation"):
+            st.session_state.chat_messages = []
+            st.rerun()
         
         # Suggestions
         st.markdown(f"""
         <div style="margin-top: 16px; padding: 16px; background: {colors['bg_secondary']}; border-radius: 8px;">
             <div style="font-size: 12px; font-weight: 500; color: {colors['text_secondary']}; margin-bottom: 8px;">SUGGESTIONS</div>
             <div style="font-size: 13px; color: {colors['text_muted']};">
-                - Quelles sont les opportunites de substitution?<br>
-                - Quels secteurs ont le plus grand potentiel?<br>
-                - Quelle est la balance commerciale?
-            </div>
+                - Quelles sont les opportunites de substitution aux importations?<br>
+                - Quels secteurs ont le plus grand potentiel de croissance?<br>
+                - Quelle est la balance commerciale du Burkina Faso?<br>
+                - Quelles sont les donnees du rapport trimestriel DGD T2-2025?<br>
+                - Resume les principales statistiques du commerce exterieur.<br>
+                - Comment ameliorer la politique commerciale nationale?<br>
+                - Quels sont les secteurs a prioriser pour l'investissement?<br>
+                -Quelle était  la balance commercial du Burkina Faso en 2016 et 2025 ? et pourquoi ?
         </div>
         """, unsafe_allow_html=True)
 
@@ -1483,7 +1707,7 @@ SUBSTITUTION (top 5): {'; '.join([f"{r['secteur'][:20]}:Score{r['score_substitut
 st.markdown(f"""
 <div style="margin-top: 48px; padding: 24px 0; border-top: 1px solid {colors['border']}; text-align: center;">
     <div style="font-size: 12px; color: {colors['text_muted']};">
-        Analyseur Import/Export Burkina Faso - Hackathon 2025 - Propulse par XGBoost & Groq LLM
+        Analyseur Import/Export Burkina Faso - Propulse par IA
     </div>
 </div>
 """, unsafe_allow_html=True)
