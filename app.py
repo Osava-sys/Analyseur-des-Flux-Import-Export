@@ -30,7 +30,7 @@ except ImportError:
 # Configuration Groq LLM
 # ============================================================
 # Priorité: Variable d'environnement > Clé hardcodée
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Dossier des documents

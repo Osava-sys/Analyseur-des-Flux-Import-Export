@@ -1584,8 +1584,8 @@ if __name__ == "__main__":
     if sys.platform == 'win32':
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     
-    # Configuration - utiliser variable d'environnement
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    # Configuration
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
     
     print("="*60)
     print("[RAG] TEST DU SYSTEME RAG")
