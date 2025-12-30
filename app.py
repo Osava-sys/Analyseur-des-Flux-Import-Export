@@ -29,8 +29,7 @@ except ImportError:
 # ============================================================
 # Configuration Groq LLM
 # ============================================================
-# Priorité: Variable d'environnement > Clé hardcodée
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = "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"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Dossier des documents
@@ -41,12 +40,12 @@ DOCUMENTS_DIR.mkdir(exist_ok=True)
 # Initialisation du système RAG
 # ============================================================
 @st.cache_resource
-def get_rag_system(api_key: str):
+def get_rag_system():
     """Initialise le système RAG (mise en cache pour performance)."""
     if not RAG_AVAILABLE:
         return None
     try:
-        rag = initialize_rag_system(api_key, force_rebuild=False)
+        rag = initialize_rag_system(GROQ_API_KEY, force_rebuild=False)
         return rag
     except Exception as e:
         print(f"Erreur initialisation RAG: {e}")
@@ -3026,7 +3025,7 @@ elif page == "Assistant IA":
     
     if data_loaded:
         # Charger le système RAG
-        rag_system = get_rag_system(GROQ_API_KEY) if RAG_AVAILABLE else None
+        rag_system = get_rag_system() if RAG_AVAILABLE else None
         rag_active = rag_system is not None and rag_system.is_initialized
         
         def get_data_context():
@@ -3136,40 +3135,7 @@ SUBSTITUTION (top 5): {'; '.join([f"{r['secteur'][:20]}:Score{r['score_substitut
                             assistant_response = result["answer"]
                             sources = result.get("sources", [])
                         else:
-                            # Gestion améliorée des erreurs, notamment rate limit
-                            error_type = result.get("error_type", "unknown")
-                            error_msg = result.get("error", "Erreur inconnue")
-                            wait_time = result.get("wait_time")
-                            
-                            if error_type == "rate_limit":
-                                if wait_time:
-                                    minutes = int(wait_time // 60)
-                                    seconds = int(wait_time % 60)
-                                    assistant_response = f"""⚠️ **Limite de taux atteinte**
-
-{error_msg}
-
-⏱️ **Temps d'attente estimé:** {minutes} minutes {seconds} secondes
-
-💡 **Solutions:**
-- Attendez quelques minutes avant de réessayer
-- Réduisez la fréquence de vos requêtes
-- Considérez mettre à niveau votre plan Groq pour plus de tokens quotidiens
-
-En attendant, vous pouvez toujours utiliser les autres fonctionnalités de l'application (graphiques, analyses, etc.)."""
-                                else:
-                                    assistant_response = f"""⚠️ **Limite de taux atteinte**
-
-{error_msg}
-
-💡 **Solutions:**
-- Attendez quelques minutes avant de réessayer
-- Réduisez la fréquence de vos requêtes
-- Considérez mettre à niveau votre plan Groq
-
-En attendant, vous pouvez toujours utiliser les autres fonctionnalités de l'application."""
-                            else:
-                                assistant_response = f"❌ **Erreur RAG:** {error_msg}"
+                            assistant_response = f"Erreur RAG: {result.get('error', 'Erreur inconnue')}"
                             sources = []
                     else:
                         # Fallback: mode simple
