@@ -31,6 +31,9 @@ sentence-transformers>=2.2.0
 # Vector Store - FAISS
 faiss-cpu>=1.7.4
 
+# Hybrid Search - BM25
+rank-bm25>=0.2.2
+
 # Tokenizer (dépendance de sentence-transformers)
 transformers>=4.35.0
 torch>=2.0.0

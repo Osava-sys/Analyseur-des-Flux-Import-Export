@@ -1,1 +1,19 @@
+# Environment
+.env
+.env.local
+venv_hackathon/
+__pycache__/
+*.pyc
 
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Logs
+*.log
