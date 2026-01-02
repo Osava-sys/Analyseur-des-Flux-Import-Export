@@ -1467,7 +1467,7 @@ if __name__ == "__main__":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     
     # Configuration
-    GROQ_API_KEY = "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"
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "your_groq_api_key_here")
     
     print("="*60)
     print("[RAG] TEST DU SYSTEME RAG")

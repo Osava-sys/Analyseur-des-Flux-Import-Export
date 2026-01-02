@@ -29,7 +29,7 @@ except ImportError:
 # ============================================================
 # Configuration Groq LLM
 # ============================================================
-GROQ_API_KEY = "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # Dossier des documents
